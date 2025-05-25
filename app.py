@@ -103,6 +103,15 @@ def add_hsts(response):
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
     return response
 
+# Prevent back button cache
+@app.after_request
+def prevent_back_button_cache(response):
+    if current_user.is_authenticated:
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    return response
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('errors/404.html', title="Page Not Found"), 404
