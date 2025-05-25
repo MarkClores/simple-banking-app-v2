@@ -17,9 +17,14 @@
                         <div class="text-danger">{{ error }}</div>
                         {% endfor %}
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-3 position-relative">
                         {{ form.password.label(class="form-label") }}
-                        {{ form.password(class="form-control") }}
+                        <div class="input-group">
+                            {{ form.password(class="form-control", id="password") }}
+                            <button type="button" class="btn btn-outline-secondary" id="togglePassword">
+                                <i class="fa fa-eye" id="toggleIcon"></i>
+                            </button>
+                        </div>
                         {% for error in form.password.errors %}
                         <div class="text-danger">{{ error }}</div>
                         {% endfor %}
