@@ -75,6 +75,9 @@ def create_app():
 
     return app
 
+# Create Flask app
+app = create_app()
+
 # timeout for inactivity in 30 min
 @app.before_request
 def session_timeout():
@@ -93,9 +96,6 @@ def session_timeout():
 
     # Update last seen time
     session['last_seen'] = now.strftime("%Y-%m-%d %H:%M:%S")
-
-# Create Flask app
-app = create_app()
 
 # Import models - must be after db initialization
 from models import User, Transaction
