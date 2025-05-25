@@ -97,6 +97,21 @@ def session_timeout():
     # Update last seen time
     session['last_seen'] = now.strftime("%Y-%m-%d %H:%M:%S")
 
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('errors/404.html', title="Page Not Found"), 404
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    # Log the error (optional)
+    app.logger.error(f"Server Error: {e}")
+    return render_template('errors/500.html', title="Server Error"), 500
+
+@app.errorhandler(Exception)
+def unhandled_exception(e):
+    app.logger.exception("Unhandled Exception")
+    return render_template("errors/500.html", title="Unexpected Error"), 500
+
 # Import models - must be after db initialization
 from models import User, Transaction
 
