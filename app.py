@@ -9,7 +9,6 @@ import secrets
 import pymysql
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter.errors import RateLimitExceeded
-from flask_talisman import Talisman
 
 # Import extensions
 from extensions import db, login_manager, bcrypt, limiter
@@ -32,9 +31,6 @@ def create_app():
     app.config['SESSION_COOKIE_SECURE'] = True
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-
-    # Force HTTP requests to HTTPS
-    Talisman(app, force_https=not app.debug, strict_transport_security=True)
 
     # CSRF Protection
     csrf.init_app(app)
@@ -101,6 +97,12 @@ def session_timeout():
     # Update last seen time
     session['last_seen'] = now.strftime("%Y-%m-%d %H:%M:%S")
 
+# Set HSTS Headers
+@app.after_request
+def add_hsts(response):
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    return response
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('errors/404.html', title="Page Not Found"), 404
@@ -155,4 +157,4 @@ if __name__ == '__main__':
     
     with app.app_context():
         db.create_all()
-    app.run(debug=Flask) 
+    app.run(debug=True) 
