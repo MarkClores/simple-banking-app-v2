@@ -163,10 +163,24 @@ class User(UserMixin, db.Model):
         return True
 
     def get_recent_transactions(self, limit=10):
-        sent = self.transactions_sent.filter(Transaction.transaction_type != 'user_edit').order_by(Transaction.timestamp.desc()).limit(limit).all()
-        received = self.transactions_received.filter(Transaction.transaction_type != 'user_edit').order_by(Transaction.timestamp.desc()).limit(limit).all()
-        all_transactions = sorted(sent + received, key=lambda x: x.timestamp, reverse=True)
-        return all_transactions[:limit]
+        sent = self.transactions_sent \
+            .filter(Transaction.transaction_type != 'user_edit') \
+            .order_by(Transaction.timestamp.desc()) \
+            .all()
+
+        received = self.transactions_received \
+            .filter(Transaction.transaction_type != 'user_edit') \
+            .order_by(Transaction.timestamp.desc()) \
+            .all()
+
+        all_transactions = sent + received
+
+        # Remove duplicates (same ID)
+        unique_transactions = {t.id: t for t in all_transactions}.values()
+
+        # Sort and return the most recent ones
+        sorted_transactions = sorted(unique_transactions, key=lambda x: x.timestamp, reverse=True)
+        return sorted_transactions[:limit]
 
     def activate_account(self):
         self.status = 'active'
