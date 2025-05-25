@@ -9,6 +9,7 @@ import secrets
 import pymysql
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter.errors import RateLimitExceeded
+from flask_talisman import Talisman
 
 # Import extensions
 from extensions import db, login_manager, bcrypt, limiter
@@ -28,9 +29,12 @@ def create_app():
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(16)
 
     # Secure session cookies
-    app.config['SESSION_COOKIE_SECURE'] = not app.debug # set this to true when deployment
+    app.config['SESSION_COOKIE_SECURE'] = True
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+    # Force HTTP requests to HTTPS
+    Talisman(app, force_https=not app.debug, strict_transport_security=True)
 
     # CSRF Protection
     csrf.init_app(app)
@@ -103,7 +107,6 @@ def page_not_found(e):
 
 @app.errorhandler(500)
 def internal_server_error(e):
-    # Log the error (optional)
     app.logger.error(f"Server Error: {e}")
     return render_template('errors/500.html', title="Server Error"), 500
 
@@ -152,4 +155,4 @@ if __name__ == '__main__':
     
     with app.app_context():
         db.create_all()
-    app.run(debug=True) 
+    app.run(debug=Flask) 
