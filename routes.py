@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, request, jsonify
+from flask import render_template, redirect, url_for, flash, request, jsonify, session
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.urls import url_parse
 from app import app, csrf
@@ -115,7 +115,7 @@ def login():
             flash('Invalid username or password.')
             return redirect(url_for('login'))
 
-        login_user(user)
+        login_user(user, remember=False, fresh=True)
         next_page = request.args.get('next')
         if not next_page or url_parse(next_page).netloc != '':
             next_page = url_for('index')
@@ -125,6 +125,7 @@ def login():
 @app.route('/logout')
 def logout():
     logout_user()
+    session.clear()
     return redirect(url_for('login'))
 
 @app.route('/register', methods=['GET', 'POST'])

@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, redirect, url_for, flash, request, jsonify
+from flask import Flask, render_template, redirect, url_for, flash, request, jsonify, session
 from flask_login import current_user, login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
@@ -31,8 +31,6 @@ def create_app():
     app.config['SESSION_COOKIE_SECURE'] = not app.debug # set this to true when deployment
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-
-    login_manager.session_protection = "strong"
 
     # CSRF Protection
     csrf.init_app(app)
@@ -76,6 +74,25 @@ def create_app():
         return render_template('rate_limit_error.html', message=str(e)), 429
 
     return app
+
+# timeout for inactivity in 30 min
+@app.before_request
+def session_timeout():
+    timeout_minutes = 30
+    now = datetime.datetime.utcnow()
+    last_seen = session.get('last_seen')
+
+    # If session expired due to inactivity
+    if last_seen:
+        elapsed = now - datetime.datetime.strptime(last_seen, "%Y-%m-%d %H:%M:%S")
+        if elapsed.total_seconds() > timeout_minutes * 60:
+            session.clear()
+            logout_user()
+            flash("You have been logged out due to inactivity.", "warning")
+            return redirect(url_for('login'))
+
+    # Update last seen time
+    session['last_seen'] = now.strftime("%Y-%m-%d %H:%M:%S")
 
 # Create Flask app
 app = create_app()
