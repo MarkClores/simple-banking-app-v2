@@ -28,7 +28,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(64), unique=True, index=True)
 
     # Encrypted fields
-    _email = db.Column("email", db.LargeBinary, unique=True, index=True)
+    _email = db.Column("email", db.LargeBinary, nullable=True)
     _phone = db.Column("phone", db.LargeBinary, nullable=True)
 
     # Lock user fields
