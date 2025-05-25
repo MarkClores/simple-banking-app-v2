@@ -27,6 +27,13 @@ def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(16)
 
+    # Secure session cookies
+    app.config['SESSION_COOKIE_SECURE'] = not app.debug # set this to true when deployment
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+    login_manager.session_protection = "strong"
+
     # CSRF Protection
     csrf.init_app(app)
 
