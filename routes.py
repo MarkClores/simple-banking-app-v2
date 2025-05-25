@@ -61,7 +61,7 @@ def about():
     return render_template('about.html', title='About Us')
 
 @app.route('/login', methods=['GET', 'POST'])
-@limiter.limit("10 per minute")
+@limiter.limit("5 per minute")
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
@@ -129,7 +129,7 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/register', methods=['GET', 'POST'])
-@limiter.limit("5 per minute")
+@limiter.limit("10 per hour")
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
@@ -255,7 +255,7 @@ def reset_password_request():
     return render_template('reset_password_request.html', title='Reset Password', form=form)
 
 @app.route('/reset_password/<token>', methods=['GET', 'POST'])
-@limiter.limit("5 per hour")
+@limiter.limit("3 per hour")
 def reset_password(token):
     if current_user.is_authenticated:
         return redirect(url_for('index'))
