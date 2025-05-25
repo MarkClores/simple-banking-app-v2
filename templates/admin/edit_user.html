@@ -20,14 +20,14 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Username</label>
-                                <input type="text" class="form-control" value="{{ user.username }}" disabled>
+                                <input type="text" class="form-control" value="{{ user.username| e }}" disabled>
                                 <div class="form-text">Username cannot be changed</div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Account Number</label>
-                                <input type="text" class="form-control" value="{{ user.account_number }}" disabled>
+                                <input type="text" class="form-control" value="{{ user.account_number | e }}" disabled>
                                 <div class="form-text">Account number cannot be changed</div>
                             </div>
                         </div>
@@ -148,7 +148,7 @@
                                 <label class="form-label">Current Balance</label>
                                 <div class="input-group">
                                     <span class="input-group-text">₱</span>
-                                    <input type="text" class="form-control" value="{{ "%.2f"|format(user.balance) }}" disabled>
+                                    <input type="text" class="form-control" value="{{ "%.2f"|format(user.balance) | e }}" disabled>
                                 </div>
                                 <div class="form-text">Use deposit feature to update balance</div>
                             </div>
@@ -156,7 +156,7 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Registration Date</label>
-                                <input type="text" class="form-control" value="{{ user.date_registered.strftime('%Y-%m-%d %H:%M') }}" disabled>
+                                <input type="text" class="form-control" value="{{ user.date_registered.strftime('%Y-%m-%d %H:%M') | e }}" disabled>
                             </div>
                         </div>
                     </div>
