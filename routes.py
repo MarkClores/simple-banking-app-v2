@@ -3,14 +3,20 @@ from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.urls import url_parse
 from app import app, csrf
 from extensions import db, limiter
-from forms import LoginForm, RegistrationForm, TransferForm, ResetPasswordRequestForm, ResetPasswordForm, DepositForm, UserEditForm, ConfirmTransferForm
-from models import User, Transaction
+from cryptography.fernet import InvalidToken
+from forms import LoginForm, RegistrationForm, TransferForm, ResetPasswordRequestForm, ResetPasswordRequestForm, ResetPasswordForm, DepositForm, UserEditForm, ConfirmTransferForm
+from models import User, Transaction, fernet
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
 from datetime import datetime, timedelta
 import os
 from functools import wraps
 import psgc_api
 import datetime
+
+# Reset token generator for valid email
+def generate_reset_token(user_id):
+    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    return serializer.dumps(user_id, salt='password-reset')
 
 # Context processor to provide current year to all templates
 @app.context_processor
@@ -243,16 +249,25 @@ def execute_transfer():
 @app.route('/reset_password_request', methods=['GET', 'POST'])
 @limiter.limit("5 per hour")
 def reset_password_request():
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))
     form = ResetPasswordRequestForm()
+
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
-        if user:
-            send_password_reset_email(user)
-        flash('Check your email for instructions to reset your password')
-        return redirect(url_for('login'))
-    return render_template('reset_password_request.html', title='Reset Password', form=form)
+        for user in User.query.all():
+            try:
+                if user.email == form.email.data:
+                    token = generate_reset_token(user.id)
+                    print(f"Reset link: {url_for('reset_password', token=token, _external=True)}")
+                    break
+            except Exception:
+                continue
+
+        return redirect(url_for('reset_password_sent'))
+
+    return render_template('reset_password_request.html', form=form, title="Reset Password")
+
+@app.route('/reset_password_sent')
+def reset_password_sent():
+    return render_template('reset_sent.html', title="Email Sent")
 
 @app.route('/reset_password/<token>', methods=['GET', 'POST'])
 @limiter.limit("3 per hour")
@@ -261,8 +276,8 @@ def reset_password(token):
         return redirect(url_for('index'))
     try:
         serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
-        email = serializer.loads(token, salt='password-reset', max_age=3600)
-        user = User.query.filter_by(email=email).first()
+        user_id = serializer.loads(token, salt='password-reset', max_age=3600)
+        user = User.query.get(user_id)
         if not user:
             return redirect(url_for('index'))
     except SignatureExpired:

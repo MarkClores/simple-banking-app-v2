@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="alert alert-success" role="alert">
+        A password reset link has been sent to the email.
+    </div>
+    <a href="{{ url_for('reset_password_request') }}" class="btn btn-outline-primary">Request Another Reset</a>
+</div>
+{% endblock %}

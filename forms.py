@@ -2,7 +2,14 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, FloatField, RadioField, SelectField, HiddenField
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, NumberRange, Optional, Length, Regexp
 from models import User
+from cryptography.fernet import Fernet, InvalidToken
+import os
 import re
+
+fernet_key = os.environ.get("FERNET_KEY")
+if not fernet_key:
+    raise ValueError("FERNET_KEY not found in environment variables.")
+fernet = Fernet(fernet_key)
 
 #Password strength validator
 def validate_strong_password(form, field):
@@ -67,6 +74,18 @@ class TransferForm(FlaskForm):
 class ResetPasswordRequestForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     submit = SubmitField('Request Password Reset')
+
+    def validate_email(self, email):
+        found = False
+        for user in User.query.all():
+            try:
+                if user.email == email.data:
+                    found = True
+                    break
+            except (InvalidToken, AttributeError):
+                continue
+        if not found:
+            raise ValidationError('No account is associated with that email.')
 
 class ResetPasswordForm(FlaskForm):
     password = PasswordField('New Password', validators=[DataRequired(), validate_strong_password])
