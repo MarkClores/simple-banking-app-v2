@@ -173,103 +173,121 @@
 
 {% block scripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const regionSelect = document.getElementById('region_select');
-        const provinceSelect = document.getElementById('province_select');
-        const citySelect = document.getElementById('city_select');
-        const barangaySelect = document.getElementById('barangay_select');
-        
-        const regionCode = document.getElementById('region_code');
-        const provinceCode = document.getElementById('province_code');
-        const cityCode = document.getElementById('city_code');
-        const barangayCode = document.getElementById('barangay_code');
-        
-        // Load provinces when region is selected
-        regionSelect.addEventListener('change', function() {
-            const selectedRegion = this.value;
-            regionCode.value = selectedRegion;
-            
-            // Reset dependent fields
-            provinceSelect.innerHTML = '<option value="">-- Select Province --</option>';
-            citySelect.innerHTML = '<option value="">-- Select City/Municipality --</option>';
-            barangaySelect.innerHTML = '<option value="">-- Select Barangay --</option>';
-            provinceCode.value = '';
-            cityCode.value = '';
-            barangayCode.value = '';
-            
-            if (selectedRegion) {
-                // Fetch provinces for the selected region
-                fetch(`/api/provinces/${selectedRegion}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        data.forEach(province => {
-                            const option = document.createElement('option');
-                            option.value = province.code;
-                            option.textContent = province.name;
-                            provinceSelect.appendChild(option);
-                        });
-                    })
-                    .catch(error => console.error('Error loading provinces:', error));
+document.addEventListener('DOMContentLoaded', function() {
+    const regionSelect = document.getElementById('region_select');
+    const provinceSelect = document.getElementById('province_select');
+    const citySelect = document.getElementById('city_select');
+    const barangaySelect = document.getElementById('barangay_select');
+
+    const regionCode = document.getElementById('region_code');
+    const provinceCode = document.getElementById('province_code');
+    const cityCode = document.getElementById('city_code');
+    const barangayCode = document.getElementById('barangay_code');
+
+    // Reset and populate a dropdown
+    function populateDropdown(select, placeholder, items, selectedValue) {
+        select.innerHTML = `<option value="">-- ${placeholder} --</option>`;
+        items.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.code;
+            option.textContent = item.name || item.name_raw || item.code;
+            if (item.code === selectedValue) {
+                option.selected = true;
             }
+            select.appendChild(option);
         });
-        
-        // Load cities/municipalities when province is selected
-        provinceSelect.addEventListener('change', function() {
-            const selectedProvince = this.value;
-            provinceCode.value = selectedProvince;
-            
-            // Reset dependent fields
-            citySelect.innerHTML = '<option value="">-- Select City/Municipality --</option>';
-            barangaySelect.innerHTML = '<option value="">-- Select Barangay --</option>';
-            cityCode.value = '';
-            barangayCode.value = '';
-            
-            if (selectedProvince) {
-                // Fetch cities and municipalities for the selected province
-                fetch(`/api/cities/${selectedProvince}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        data.forEach(city => {
-                            const option = document.createElement('option');
-                            option.value = city.code;
-                            option.textContent = city.name;
-                            citySelect.appendChild(option);
-                        });
-                    })
-                    .catch(error => console.error('Error loading cities/municipalities:', error));
-            }
-        });
-        
-        // Load barangays when city/municipality is selected
-        citySelect.addEventListener('change', function() {
-            const selectedCity = this.value;
-            cityCode.value = selectedCity;
-            
-            // Reset dependent fields
-            barangaySelect.innerHTML = '<option value="">-- Select Barangay --</option>';
-            barangayCode.value = '';
-            
-            if (selectedCity) {
-                // Fetch barangays for the selected city/municipality
-                fetch(`/api/barangays/${selectedCity}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        data.forEach(barangay => {
-                            const option = document.createElement('option');
-                            option.value = barangay.code;
-                            option.textContent = barangay.name;
-                            barangaySelect.appendChild(option);
-                        });
-                    })
-                    .catch(error => console.error('Error loading barangays:', error));
-            }
-        });
-        
-        // Update hidden field when barangay is selected
-        barangaySelect.addEventListener('change', function() {
-            const selectedBarangay = this.value;
-            barangayCode.value = selectedBarangay;
-        });
+    }
+
+    // Load provinces based on region
+    function loadProvinces(region_code, selected_province) {
+        fetch(`/api/provinces/${region_code}`)
+            .then(res => res.json())
+            .then(data => {
+                populateDropdown(provinceSelect, 'Select Province', data, selected_province);
+                if (selected_province) {
+                    loadCities(selected_province, cityCode.value);
+                }
+            })
+            .catch(err => console.error('Failed to load provinces:', err));
+    }
+
+    // Load cities/municipalities based on province
+    function loadCities(province_code, selected_city) {
+        fetch(`/api/cities/${province_code}`)
+            .then(res => res.json())
+            .then(data => {
+                populateDropdown(citySelect, 'Select City/Municipality', data, selected_city);
+                if (selected_city) {
+                    loadBarangays(selected_city, barangayCode.value);
+                }
+            })
+            .catch(err => console.error('Failed to load cities:', err));
+    }
+
+    // Load barangays based on city
+    function loadBarangays(city_code, selected_barangay) {
+        fetch(`/api/barangays/${city_code}`)
+            .then(res => res.json())
+            .then(data => {
+                populateDropdown(barangaySelect, 'Select Barangay', data, selected_barangay);
+            })
+            .catch(err => console.error('Failed to load barangays:', err));
+    }
+
+    // Trigger dynamic loading on user selection
+    regionSelect.addEventListener('change', function() {
+        const code = this.value;
+        regionCode.value = code;
+        provinceCode.value = '';
+        cityCode.value = '';
+        barangayCode.value = '';
+        populateDropdown(provinceSelect, 'Select Province', [], '');
+        populateDropdown(citySelect, 'Select City/Municipality', [], '');
+        populateDropdown(barangaySelect, 'Select Barangay', [], '');
+
+        if (code) {
+            loadProvinces(code);
+        }
     });
+
+    provinceSelect.addEventListener('change', function() {
+        const code = this.value;
+        provinceCode.value = code;
+        cityCode.value = '';
+        barangayCode.value = '';
+        populateDropdown(citySelect, 'Select City/Municipality', [], '');
+        populateDropdown(barangaySelect, 'Select Barangay', [], '');
+
+        if (code) {
+            loadCities(code);
+        }
+    });
+
+    citySelect.addEventListener('change', function() {
+        const code = this.value;
+        cityCode.value = code;
+        barangayCode.value = '';
+        populateDropdown(barangaySelect, 'Select Barangay', [], '');
+
+        if (code) {
+            loadBarangays(code);
+        }
+    });
+
+    barangaySelect.addEventListener('change', function() {
+        barangayCode.value = this.value;
+    });
+
+    // 🧠 Load initial values on page load for editing user
+    const currentRegion = regionCode.value;
+    const currentProvince = provinceCode.value;
+    const currentCity = cityCode.value;
+    const currentBarangay = barangayCode.value;
+
+    if (currentRegion) {
+        regionSelect.value = currentRegion;
+        loadProvinces(currentRegion, currentProvince);
+    }
+});
 </script>
-{% endblock %} 
+{% endblock %}
