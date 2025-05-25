@@ -24,16 +24,26 @@
                         <div class="text-danger">{{ error }}</div>
                         {% endfor %}
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-3 position-relative">
                         {{ form.password.label(class="form-label") }}
-                        {{ form.password(class="form-control") }}
+                        <div class="input-group">
+                            {{ form.password(class="form-control", id="password") }}
+                            <span class="input-group-text">
+                                <i class="fa fa-eye" id="togglePassword" style="cursor: pointer;"></i>
+                            </span>
+                        </div>
                         {% for error in form.password.errors %}
                         <div class="text-danger">{{ error }}</div>
                         {% endfor %}
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-3 position-relative">
                         {{ form.password2.label(class="form-label") }}
-                        {{ form.password2(class="form-control") }}
+                        <div class="input-group">
+                            {{ form.password2(class="form-control", id="password2") }}
+                            <span class="input-group-text">
+                                <i class="fa fa-eye" id="togglePassword2" style="cursor: pointer;"></i>
+                            </span>
+                        </div>
                         {% for error in form.password2.errors %}
                         <div class="text-danger">{{ error }}</div>
                         {% endfor %}
@@ -49,4 +59,26 @@
         </div>
     </div>
 </div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const togglePassword = document.getElementById("togglePassword");
+        const password = document.getElementById("password");
+
+        togglePassword.addEventListener("click", function () {
+            const type = password.getAttribute("type") === "password" ? "text" : "password";
+            password.setAttribute("type", type);
+            this.classList.toggle("fa-eye-slash");
+        });
+
+        const togglePassword2 = document.getElementById("togglePassword2");
+        const password2 = document.getElementById("password2");
+
+        togglePassword2.addEventListener("click", function () {
+            const type = password2.getAttribute("type") === "password" ? "text" : "password";
+            password2.setAttribute("type", type);
+            this.classList.toggle("fa-eye-slash");
+        });
+    });
+</script>
+
 {% endblock %} 

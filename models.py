@@ -17,6 +17,12 @@ def generate_account_number():
     """Generate a random 10-digit account number"""
     return ''.join(random.choices(string.digits, k=10))
 
+def generate_unique_account_number():
+    while True:
+        acct_num = generate_account_number()
+        if not User.query.filter_by(account_number=acct_num).first():
+            return acct_num
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, index=True)
@@ -38,7 +44,7 @@ class User(UserMixin, db.Model):
     barangay_name = db.Column(db.String(100), nullable=True)
     postal_code = db.Column(db.String(10), nullable=True)
     password_hash = db.Column(db.String(128))
-    account_number = db.Column(db.String(10), unique=True, default=generate_account_number)
+    account_number = db.Column(db.String(10), unique=True, default=generate_unique_account_number)
     balance = db.Column(db.Float, default=1000.0)
     status = db.Column(db.String(20), default='pending')
     is_admin = db.Column(db.Boolean, default=False)
@@ -58,11 +64,18 @@ class User(UserMixin, db.Model):
         
     @staticmethod
     def encrypt_email(value):
-        return fernet.encrypt(value.encode()).decode()
+        return fernet.encrypt(value.encode())
 
     @email.setter
     def email(self, value):
-        self._email = fernet.encrypt(value).decode()
+        self._email = fernet.encrypt(value.encode())
+    
+    @email.getter
+    def email(self):
+        try:
+            return fernet.decrypt(self._email).decode() if self._email else ""
+        except (InvalidToken, TypeError):
+            return "[Invalid email]"
 
     @property
     def phone(self):
@@ -74,6 +87,13 @@ class User(UserMixin, db.Model):
     @phone.setter
     def phone(self, value):
         self._phone = fernet.encrypt(value.encode()) if value else None
+
+    @phone.getter
+    def phone(self):
+        try:
+            return fernet.decrypt(self._phone).decode() if self._phone else ""
+        except (InvalidToken, TypeError):
+            return "[Invalid phone]"
 
     @property
     def full_address(self):

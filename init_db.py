@@ -398,4 +398,8 @@ if __name__ == "__main__":
         print("Make sure MySQL server is running and credentials are correct in .env file.")
         # Exit with error code
         import sys
+<<<<<<< HEAD
         sys.exit(1) 
+=======
+        sys.exit(1) 
+>>>>>>> 1ea23cf (added unique account number generator, reverted init_db, added password visibility toggle in register section)
