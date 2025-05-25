@@ -6,6 +6,7 @@ from extensions import db, limiter
 from forms import LoginForm, RegistrationForm, TransferForm, ResetPasswordRequestForm, ResetPasswordForm, DepositForm, UserEditForm, ConfirmTransferForm
 from models import User, Transaction
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
+from datetime import datetime, timedelta
 import os
 from functools import wraps
 import psgc_api
@@ -93,7 +94,27 @@ def login():
             else:  # deactivated
                 flash('Your account has been deactivated. Please contact an administrator.')
             return redirect(url_for('login'))
-            
+
+        MAX_ATTEMPTS = 10
+        LOCK_DURATION = timedelta(minutes=1)
+
+        if user.is_locked:
+            if datetime.utcnow() - user.last_failed_login > LOCK_DURATION:
+                user.is_locked = False
+                user.failed_attempts = 0
+            else:
+                flash('Your account is locked. Try again later.')
+                return redirect(url_for('login'))
+
+        if not user.check_password(form.password.data):
+            user.failed_attempts += 1
+            user.last_failed_login = datetime.utcnow()
+            if user.failed_attempts >= MAX_ATTEMPTS:
+                user.is_locked = True
+            db.session.commit()
+            flash('Invalid username or password.')
+            return redirect(url_for('login'))
+
         login_user(user)
         next_page = request.args.get('next')
         if not next_page or url_parse(next_page).netloc != '':

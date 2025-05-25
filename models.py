@@ -31,6 +31,11 @@ class User(UserMixin, db.Model):
     _email = db.Column("email", db.LargeBinary, unique=True, index=True)
     _phone = db.Column("phone", db.LargeBinary, nullable=True)
 
+    # Lock user fields
+    failed_attempts = db.Column(db.Integer, default=0)
+    last_failed_login = db.Column(db.DateTime)
+    is_locked = db.Column(db.Boolean, default=False)
+
     firstname = db.Column(db.String(64), nullable=True)
     lastname = db.Column(db.String(64), nullable=True)
     address_line = db.Column(db.String(256), nullable=True)
